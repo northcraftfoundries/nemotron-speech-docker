@@ -22,6 +22,8 @@ class AppConfig:
     default_chunk_ms: int
     startup_self_test: bool
     self_test_audio: tuple[SelfTestAudio, ...]
+    cors_origins: tuple[str, ...]
+    cors_allow_credentials: bool
 
 
 def load_config(path: str | Path | None = None) -> AppConfig:
@@ -47,6 +49,10 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         supported = ", ".join(str(value) for value in SUPPORTED_CONFIG_CHUNK_MS)
         raise ValueError(f"default_chunk_ms must be one of: {supported}")
     startup_self_test = _as_bool(os.getenv("STARTUP_SELF_TEST", data.get("startup_self_test", True)))
+    cors_origins = _load_cors_origins(data.get("cors_origins", ["*"]))
+    cors_allow_credentials = _as_bool(
+        os.getenv("CORS_ALLOW_CREDENTIALS", data.get("cors_allow_credentials", False))
+    )
 
     raw_tests = data.get("self_test_audio", [])
     if not isinstance(raw_tests, list):
@@ -65,7 +71,29 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         default_chunk_ms=default_chunk_ms,
         startup_self_test=startup_self_test,
         self_test_audio=tuple(self_test_audio),
+        cors_origins=cors_origins,
+        cors_allow_credentials=cors_allow_credentials,
     )
+
+
+def _load_cors_origins(value: Any) -> tuple[str, ...]:
+    env = os.getenv("CORS_ORIGINS")
+    if env is not None:
+        origins = [origin.strip() for origin in env.split(",") if origin.strip()]
+    elif isinstance(value, str):
+        origins = [value.strip()] if value.strip() else []
+    elif isinstance(value, list):
+        if not all(isinstance(item, str) for item in value):
+            raise ValueError("cors_origins must be a list of origins")
+        origins = [item.strip() for item in value if item.strip()]
+    else:
+        raise ValueError("cors_origins must be a list of origins")
+
+    if not origins:
+        return ("*",)
+    if "*" in origins:
+        return ("*",)
+    return tuple(origins)
 
 
 def _as_bool(value: Any) -> bool:

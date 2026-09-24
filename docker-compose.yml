@@ -9,6 +9,7 @@ services:
       MODEL_ID: onnx-community/nemotron-3.5-asr-streaming-0.6b-onnx-int4
       MODEL_DIR: /models/nemotron
       EXECUTION_PROVIDER: cpu
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
       CONFIG_PATH: /app/config.yaml
     volumes:
       - nemotron-models:/models

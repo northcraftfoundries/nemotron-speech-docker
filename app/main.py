@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.asr import (
@@ -50,6 +51,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Nemotron 3.5 ASR ONNX INT4", version="0.1.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(settings.cors_origins),
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    max_age=600,
+)
 
 
 @app.get("/health")
